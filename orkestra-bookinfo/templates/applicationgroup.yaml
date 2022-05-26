@@ -1,0 +1,55 @@
+apiVersion: orkestra.azure.microsoft.com/v1alpha1
+kind: ApplicationGroup
+metadata:
+  name: bookinfo 
+spec:
+  applications:
+    - name: ambassador
+      dependencies: []
+      spec:
+        chart:
+          url: "https://nitishm.github.io/charts"
+          name: ambassador 
+          version: 6.6.0
+          # Authorization Object Reference (Kind: Secret)
+          # this secret holds all auth information and credentials
+          # to register a protected/private helm registry
+          # Uncomment the lines below if you wish to register a private helm registry
+          # and make sure you deploy the Secret object to the given namespace/name 
+          # as well
+          # authRef: 
+          #   name: <secret-name>
+          #   namespace: <secret-namespace>
+        release:
+          timeout: 10m
+          targetNamespace: ambassador 
+          values:
+            service:
+              type: ClusterIP
+    - name: bookinfo 
+      dependencies: [ambassador]
+      spec:
+        chart:
+          url: "https://nitishm.github.io/charts"
+          name: bookinfo 
+          version: v1
+        subcharts:
+        - name: productpage
+          dependencies: [reviews]
+        - name: reviews
+          dependencies: [details, ratings]
+        - name: ratings
+          dependencies: []
+        - name: details
+          dependencies: []
+        release:
+          targetNamespace: bookinfo 
+          values:
+            productpage:
+              replicaCount: 1
+            details:
+              replicaCount: 1
+            reviews:
+              replicaCount: 1
+            ratings:
+              replicaCount: 1
